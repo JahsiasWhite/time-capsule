@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Time Capsule</title>
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      body {
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto,
+          sans-serif;
+        line-height: 1.5;
+        color: #333;
+      }
+
+      .container {
+        min-height: 100vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 24px;
+      }
+
+      .input-container {
+        max-width: 600px;
+        width: 100%;
+        text-align: center;
+        position: relative;
+      }
+
+      .cursor {
+        display: inline-block;
+        width: 1px;
+        height: 24px;
+        background-color: #000;
+        animation: blink 1s step-end infinite;
+      }
+
+      @keyframes blink {
+        0%,
+        100% {
+          opacity: 1;
+        }
+        50% {
+          opacity: 0;
+        }
+      }
+
+      .message-input,
+      .date-input {
+        width: 100%;
+        background: transparent;
+        text-align: center;
+        font-size: 1.25rem;
+        border: none;
+        outline: none;
+        padding: 8px;
+        font-family: inherit;
+      }
+
+      .message-input {
+        resize: none;
+        height: auto;
+        overflow: hidden;
+      }
+
+      .date-label {
+        color: #666;
+        font-size: 0.875rem;
+        margin-bottom: 16px;
+      }
+
+      .copied-text {
+        margin-top: 24px;
+        font-size: 0.875rem;
+        color: #666;
+      }
+
+      .capsule-view {
+        text-align: center;
+        max-width: 600px;
+      }
+
+      .icon {
+        font-size: 3rem;
+        margin-bottom: 24px;
+      }
+
+      .message {
+        font-size: 1.25rem;
+        white-space: pre-wrap;
+      }
+
+      .return-text {
+        color: #666;
+      }
+
+      .error {
+        color: #dc2626;
+      }
+
+      input[type='date']::-webkit-calendar-picker-indicator {
+        opacity: 0.3;
+      }
+
+      .hidden {
+        display: none;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <div class="input-container" id="createView">
+        <div class="cursor" id="cursor"></div>
+        <textarea
+          class="message-input hidden"
+          id="messageInput"
+          placeholder="type your message"
+          rows="1"
+        ></textarea>
+        <div id="dateContainer" class="hidden">
+          <p class="date-label">unlock date</p>
+          <input type="date" class="date-input" id="dateInput" />
+        </div>
+        <div class="copied-text hidden" id="copiedText">
+          link copied to clipboard
+        </div>
+      </div>
+      <div class="capsule-view hidden" id="capsuleView"></div>
+    </div>
+
+    <script>
+      const cursor = document.getElementById('cursor');
+      const messageInput = document.getElementById('messageInput');
+      const dateContainer = document.getElementById('dateContainer');
+      const dateInput = document.getElementById('dateInput');
+      const copiedText = document.getElementById('copiedText');
+      const createView = document.getElementById('createView');
+      const capsuleView = document.getElementById('capsuleView');
+
+      // Set minimum date to today
+      dateInput.min = new Date().toISOString().split('T')[0];
+
+      // Check if viewing a capsule
+      if (window.location.hash) {
+        try {
+          const decoded = atob(window.location.hash.slice(1));
+          const capsuleData = JSON.parse(decoded);
+          const isLocked = new Date(capsuleData.d) > new Date();
+
+          createView.classList.add('hidden');
+          capsuleView.classList.remove('hidden');
+
+          if (isLocked) {
+            capsuleView.innerHTML = `
+                        <div class="icon">🔒</div>
+                        <p class="return-text">
+                            return on ${new Date(
+                              capsuleData.d
+                            ).toLocaleDateString()}
+                        </p>
+                    `;
+          } else {
+            capsuleView.innerHTML = `
+                        <div class="icon">🔓</div>
+                        <p class="message">${capsuleData.m}</p>
+                    `;
+          }
+        } catch (e) {
+          capsuleView.innerHTML = '<p class="error">Invalid capsule</p>';
+          createView.classList.add('hidden');
+          capsuleView.classList.remove('hidden');
+        }
+      } else {
+        // Create mode
+        document.addEventListener('click', () => {
+          if (cursor.style.display !== 'none') {
+            cursor.style.display = 'none';
+            messageInput.classList.remove('hidden');
+            messageInput.focus();
+          }
+        });
+
+        // Auto-resize textarea
+        messageInput.addEventListener('input', () => {
+          messageInput.style.height = 'auto';
+          messageInput.style.height = messageInput.scrollHeight + 'px';
+        });
+
+        // Handle Enter key on message
+        messageInput.addEventListener('keydown', (e) => {
+          if (e.key === 'Enter' && messageInput.value.trim()) {
+            e.preventDefault();
+            messageInput.classList.add('hidden');
+            dateContainer.classList.remove('hidden');
+            dateInput.focus();
+          }
+        });
+
+        // Handle Enter key on date
+        dateInput.addEventListener('keydown', (e) => {
+          if (e.key === 'Enter' && dateInput.value) {
+            e.preventDefault();
+            const data = {
+              m: messageInput.value.trim(),
+              d: dateInput.value,
+            };
+            const encoded = btoa(JSON.stringify(data));
+            const link = `${window.location.origin}${window.location.pathname}#${encoded}`;
+
+            navigator.clipboard.writeText(link);
+            dateContainer.classList.add('hidden');
+            copiedText.classList.remove('hidden');
+          }
+        });
+      }
+    </script>
+  </body>
+</html>
