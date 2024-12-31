@@ -30,6 +30,7 @@
         align-items: center;
         justify-content: center;
         padding: 24px;
+        overflow: hidden;
       }
 
       .input-container {
@@ -67,7 +68,46 @@
         }
       }
 
-      .message-input,
+      .message-input {
+        resize: none;
+        height: auto;
+        overflow: hidden;
+        opacity: 0;
+        position: absolute;
+        pointer-events: none;
+        width: 100%;
+        background: transparent;
+        text-align: center;
+        font-size: 1.25rem;
+        border: none;
+        outline: none;
+        padding: 8px;
+        font-family: inherit;
+        color: #e1e1e1;
+      }
+
+      .message-input.active {
+        opacity: 1;
+        position: static;
+        pointer-events: auto;
+      }
+
+      #messageNext {
+        opacity: 0;
+        transition: opacity 0.3s ease;
+        pointer-events: none;
+      }
+
+      #messageNext.visible {
+        opacity: 1;
+        pointer-events: auto;
+      }
+
+      .placeholder-text {
+        color: #666;
+        font-size: 1.25rem;
+      }
+
       .date-input {
         width: 100%;
         background: transparent;
@@ -80,16 +120,32 @@
         color: #e1e1e1;
       }
 
-      .message-input {
-        resize: none;
-        height: auto;
-        overflow: hidden;
-      }
-
       .date-label {
         color: #888;
         font-size: 0.875rem;
         margin-bottom: 16px;
+      }
+
+      .button {
+        background: #333;
+        border: none;
+        color: #e1e1e1;
+        padding: 8px 24px;
+        border-radius: 4px;
+        font-size: 1rem;
+        cursor: pointer;
+        margin-top: 16px;
+        transition: background 0.2s;
+      }
+
+      .button:hover {
+        background: #444;
+      }
+
+      .button:disabled {
+        background: #222;
+        color: #666;
+        cursor: not-allowed;
       }
 
       .copied-text {
@@ -148,15 +204,20 @@
           write a message for New Year's Eve
         </h1>
         <div class="cursor hidden" id="cursor"></div>
+        <div class="placeholder-text" id="placeholderText">
+          type your message
+        </div>
         <textarea
           class="message-input"
           id="messageInput"
           placeholder="type your message"
           rows="1"
         ></textarea>
+        <button id="messageNext" class="button">Next</button>
         <div id="dateContainer" class="hidden">
           <p class="date-label">unlock date</p>
           <input type="date" class="date-input" id="dateInput" />
+          <button id="dateNext" class="button">Create Time Capsule</button>
         </div>
         <div class="copied-text hidden" id="copiedText">
           link copied to clipboard
@@ -168,12 +229,15 @@
     <script>
       const cursor = document.getElementById('cursor');
       const messageInput = document.getElementById('messageInput');
+      const messageNext = document.getElementById('messageNext');
       const dateContainer = document.getElementById('dateContainer');
       const dateInput = document.getElementById('dateInput');
+      const dateNext = document.getElementById('dateNext');
       const copiedText = document.getElementById('copiedText');
       const createView = document.getElementById('createView');
       const capsuleView = document.getElementById('capsuleView');
       const introText = document.getElementById('introText');
+      const placeholderText = document.getElementById('placeholderText');
 
       const futureDates = [
         "New Year's Eve",
@@ -191,21 +255,26 @@
       ];
 
       let currentDateIndex = 0;
+      let cycleInterval;
 
       // Show initial intro text
       setTimeout(() => {
         introText.style.opacity = '1';
       }, 1000);
 
-      // Cycle through dates
-      const cycleInterval = setInterval(() => {
-        currentDateIndex = (currentDateIndex + 1) % futureDates.length;
-        introText.style.opacity = '0';
-        setTimeout(() => {
-          introText.textContent = `write a message for ${futureDates[currentDateIndex]}`;
-          introText.style.opacity = '1';
-        }, 500);
-      }, 3000);
+      // Start the cycle
+      function startCycle() {
+        cycleInterval = setInterval(() => {
+          currentDateIndex = (currentDateIndex + 1) % futureDates.length;
+          introText.style.opacity = '0';
+          setTimeout(() => {
+            introText.textContent = `write a message for ${futureDates[currentDateIndex]}`;
+            introText.style.opacity = '1';
+          }, 500);
+        }, 3000);
+      }
+
+      startCycle();
 
       // Set minimum date to today
       dateInput.min = new Date().toISOString().split('T')[0];
@@ -223,18 +292,16 @@
 
           if (isLocked) {
             capsuleView.innerHTML = `
-                        <div class="icon">🔒</div>
-                        <p class="return-text">
-                            return on ${new Date(
-                              capsuleData.d
-                            ).toLocaleDateString()}
-                        </p>
-                    `;
+              <div class="icon">🔒</div>
+              <p class="return-text">
+                unlocks on ${new Date(capsuleData.d).toLocaleDateString()}
+              </p>
+            `;
           } else {
             capsuleView.innerHTML = `
-                        <div class="icon">🔓</div>
-                        <p class="message">${capsuleData.m}</p>
-                    `;
+              <div class="icon">🔓</div>
+              <p class="message">${capsuleData.m}</p>
+            `;
           }
         } catch (e) {
           capsuleView.innerHTML = '<p class="error">Invalid capsule</p>';
@@ -246,31 +313,42 @@
         document.addEventListener('click', () => {
           if (cursor.style.display !== 'none') {
             cursor.style.display = 'none';
-            messageInput.classList.remove('hidden');
+            placeholderText.style.display = 'none';
+            messageInput.classList.add('active');
             messageInput.focus();
           }
         });
 
-        // Auto-resize textarea
+        // Handle message input
         messageInput.addEventListener('input', () => {
+          //   if (messageInput.value.length === 1) {
+          //     clearInterval(cycleInterval);
+          //     introText.style.opacity = '0';
+          //   }
           messageInput.style.height = 'auto';
           messageInput.style.height = messageInput.scrollHeight + 'px';
-        });
-
-        // Handle Enter key on message
-        messageInput.addEventListener('keydown', (e) => {
-          if (e.key === 'Enter' && messageInput.value.trim()) {
-            e.preventDefault();
-            messageInput.classList.add('hidden');
-            dateContainer.classList.remove('hidden');
-            dateInput.focus();
+          messageNext.disabled = !messageInput.value.trim();
+          if (messageInput.value.trim().length > 0) {
+            messageNext.classList.add('visible');
+          } else {
+            messageNext.classList.remove('visible');
           }
         });
 
-        // Handle Enter key on date
-        dateInput.addEventListener('keydown', (e) => {
-          if (e.key === 'Enter' && dateInput.value) {
-            e.preventDefault();
+        // Handle next button for message
+        messageNext.addEventListener('click', () => {
+          if (messageInput.value.trim()) {
+            messageInput.classList.add('hidden');
+            messageNext.classList.add('hidden');
+            dateContainer.classList.remove('hidden');
+            dateInput.focus();
+            clearInterval(cycleInterval);
+          }
+        });
+
+        // Handle next button for date
+        dateNext.addEventListener('click', () => {
+          if (dateInput.value) {
             const data = {
               m: messageInput.value.trim(),
               d: dateInput.value,
@@ -281,6 +359,21 @@
             navigator.clipboard.writeText(link);
             dateContainer.classList.add('hidden');
             copiedText.classList.remove('hidden');
+          }
+        });
+
+        // Keep Enter key functionality
+        messageInput.addEventListener('keydown', (e) => {
+          if (e.key === 'Enter' && messageInput.value.trim()) {
+            e.preventDefault();
+            messageNext.click();
+          }
+        });
+
+        dateInput.addEventListener('keydown', (e) => {
+          if (e.key === 'Enter' && dateInput.value) {
+            e.preventDefault();
+            dateNext.click();
           }
         });
       }
