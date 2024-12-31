@@ -15,7 +15,13 @@
         font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto,
           sans-serif;
         line-height: 1.5;
-        color: #333;
+        background: #111;
+        color: #e1e1e1;
+      }
+
+      ::placeholder {
+        color: #666;
+        opacity: 1;
       }
 
       .container {
@@ -33,11 +39,21 @@
         position: relative;
       }
 
+      .intro-text {
+        position: absolute;
+        width: 100%;
+        bottom: 300%;
+        margin-bottom: 20px;
+        color: #666;
+        opacity: 0;
+        transition: opacity 0.5s ease-in-out;
+      }
+
       .cursor {
         display: inline-block;
         width: 1px;
         height: 24px;
-        background-color: #000;
+        background-color: #e1e1e1;
         animation: blink 1s step-end infinite;
       }
 
@@ -61,6 +77,7 @@
         outline: none;
         padding: 8px;
         font-family: inherit;
+        color: #e1e1e1;
       }
 
       .message-input {
@@ -70,7 +87,7 @@
       }
 
       .date-label {
-        color: #666;
+        color: #888;
         font-size: 0.875rem;
         margin-bottom: 16px;
       }
@@ -78,7 +95,7 @@
       .copied-text {
         margin-top: 24px;
         font-size: 0.875rem;
-        color: #666;
+        color: #888;
       }
 
       .capsule-view {
@@ -94,31 +111,45 @@
       .message {
         font-size: 1.25rem;
         white-space: pre-wrap;
+        color: #e1e1e1;
       }
 
       .return-text {
-        color: #666;
+        color: #888;
       }
 
       .error {
-        color: #dc2626;
+        color: #ff6b6b;
+      }
+
+      input[type='date'] {
+        color-scheme: dark;
       }
 
       input[type='date']::-webkit-calendar-picker-indicator {
+        filter: invert(0.8);
         opacity: 0.3;
       }
 
       .hidden {
         display: none;
       }
+
+      textarea:focus::placeholder {
+        opacity: 0;
+        transition: opacity 0.2s;
+      }
     </style>
   </head>
   <body>
     <div class="container">
       <div class="input-container" id="createView">
-        <div class="cursor" id="cursor"></div>
+        <h1 class="intro-text" id="introText">
+          write a message for New Year's Eve
+        </h1>
+        <div class="cursor hidden" id="cursor"></div>
         <textarea
-          class="message-input hidden"
+          class="message-input"
           id="messageInput"
           placeholder="type your message"
           rows="1"
@@ -142,12 +173,46 @@
       const copiedText = document.getElementById('copiedText');
       const createView = document.getElementById('createView');
       const capsuleView = document.getElementById('capsuleView');
+      const introText = document.getElementById('introText');
+
+      const futureDates = [
+        "New Year's Eve",
+        'your birthday',
+        'graduation day',
+        'Christmas morning',
+        "Valentine's Day",
+        'your wedding day',
+        'one year from today',
+        "when you're famous",
+        'the first day of summer',
+        'your future self',
+        'the next blue moon',
+        '2030',
+      ];
+
+      let currentDateIndex = 0;
+
+      // Show initial intro text
+      setTimeout(() => {
+        introText.style.opacity = '1';
+      }, 1000);
+
+      // Cycle through dates
+      const cycleInterval = setInterval(() => {
+        currentDateIndex = (currentDateIndex + 1) % futureDates.length;
+        introText.style.opacity = '0';
+        setTimeout(() => {
+          introText.textContent = `write a message for ${futureDates[currentDateIndex]}`;
+          introText.style.opacity = '1';
+        }, 500);
+      }, 3000);
 
       // Set minimum date to today
       dateInput.min = new Date().toISOString().split('T')[0];
 
       // Check if viewing a capsule
       if (window.location.hash) {
+        clearInterval(cycleInterval);
         try {
           const decoded = atob(window.location.hash.slice(1));
           const capsuleData = JSON.parse(decoded);
