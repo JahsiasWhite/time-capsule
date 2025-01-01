@@ -233,6 +233,30 @@
         opacity: 0;
         transition: opacity 0.2s;
       }
+
+      .image-upload-label {
+        display: inline-block;
+        padding: 10px 20px;
+        /* background-color: #4a4a4a; */
+        /* color: white; */
+        border-radius: 5px;
+        cursor: pointer;
+        transition: background-color 0.3s ease;
+      }
+
+      #selectedFileName {
+        /* margin-left: 10px; */
+        font-size: 0.9em;
+        opacity: 0.8;
+      }
+
+      .controls-container {
+        margin-top: 10px;
+      }
+
+      .capsule-image {
+        max-width: 100%;
+      }
     </style>
   </head>
   <body>
@@ -248,7 +272,23 @@
           placeholder="type your message"
           rows="1"
         ></textarea>
-        <button id="messageNext" class="button">Next</button>
+
+        <div id="controlsSection" class="controls-container fade-in">
+          <div class="upload-section">
+            <input
+              type="file"
+              id="imageUpload"
+              accept="image/*"
+              class="hidden"
+            />
+            <label for="imageUpload" class="button upload-button">
+              Choose Image
+              <span id="selectedFileName"></span>
+            </label>
+          </div>
+
+          <button id="messageNext" class="button">Next</button>
+        </div>
         <div id="dateContainer" class="hidden">
           <p class="date-label">
             enter a date for the time capsule to be unlocked
@@ -279,6 +319,7 @@
       const capsuleView = document.getElementById('capsuleView');
       const introText = document.getElementById('introText');
       const placeholderText = document.getElementById('placeholderText');
+      const controlsSection = document.getElementById('controlsSection');
 
       const futureDates = [
         "New Year's Eve",
@@ -350,6 +391,12 @@
                 new Date(capsuleData.d).toISOString().split('T')[0]
               }</p>
               <p class="message">${capsuleData.m}</p>
+                ${
+                  capsuleData.i
+                    ? `<img src="${capsuleData.i}" class="capsule-image">`
+                    : ''
+                }
+
             `;
           }
         } catch (e) {
@@ -406,6 +453,8 @@
             messageInput.classList.add('fade-out');
             messageInput.classList.add('hidden');
 
+            controlsSection.classList.add('hidden');
+
             messageNext.classList.add('hidden');
 
             dateContainer.classList.remove('hidden');
@@ -421,18 +470,42 @@
           }
         });
 
+        document
+          .getElementById('imageUpload')
+          .addEventListener('change', (e) => {
+            const fileName = e.target.files[0]?.name;
+            document.getElementById('selectedFileName').textContent =
+              fileName || '';
+          });
+
         // Handle next button for date
-        dateNext.addEventListener('click', () => {
+        dateNext.addEventListener('click', async () => {
           if (dateInput.value) {
             const selectedDate = new Date(dateInput.value);
             // selectedDate.setHours(0, 0, 0, 0); // Set to end of day in local time
 
+            const imageFile = document.getElementById('imageUpload').files[0];
+            let imageData = null;
+            if (imageFile) {
+              imageData = await convertImageToBase64(imageFile);
+            }
+
             const data = {
               m: messageInput.value.trim(),
               d: selectedDate.toISOString(),
+              i: imageData,
             };
             const encoded = btoa(JSON.stringify(data));
-            const link = `${window.location.origin}${window.location.pathname}#${encoded}`;
+            let link = '';
+            if (
+              window.location.origin === null ||
+              window.location.origin === 'null'
+            ) {
+              console.error('ORIGIN IS NULL? LOCAL ONLY?');
+              link = `${window.location.href}#${encoded}`;
+            } else {
+              link = `${window.location.origin}${window.location.pathname}#${encoded}`;
+            }
 
             navigator.clipboard.writeText(link);
             dateContainer.classList.add('hidden');
@@ -445,6 +518,15 @@
             copiedLink.textContent = link;
           }
         });
+
+        function convertImageToBase64(file) {
+          return new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.onload = () => resolve(reader.result);
+            reader.onerror = reject;
+            reader.readAsDataURL(file);
+          });
+        }
 
         // Keep Enter key functionality
         messageInput.addEventListener('keydown', (e) => {
