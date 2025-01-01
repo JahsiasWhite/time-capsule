@@ -528,6 +528,13 @@
           });
         }
 
+        document.addEventListener('DOMContentLoaded', () => {
+          // Check message input on page load
+          if (messageInput.value.trim()) {
+            messageNext.classList.add('visible');
+          }
+        });
+
         // Keep Enter key functionality
         messageInput.addEventListener('keydown', (e) => {
           if (e.key === 'Enter' && messageInput.value.trim()) {
