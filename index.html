@@ -221,11 +221,6 @@
         }
       }
 
-      /* .fade-in-init {
-        animation: fadeIn 1s ease-in forwards;
-        opacity: 0;
-      } */
-
       .fade-in {
         animation: fadeIn 1s ease-in forwards;
       }
@@ -247,9 +242,6 @@
           write a message for your time capsule
         </h1>
         <div class="cursor hidden" id="cursor"></div>
-        <!-- <div class="placeholder-text" id="placeholderText">
-          type your message
-        </div> -->
         <textarea
           class="message-input fade-in"
           id="messageInput"
@@ -328,55 +320,73 @@
       // Set minimum date to today
       dateInput.min = new Date().toISOString().split('T')[0];
 
-      // Check if viewing a capsule
-      if (window.location.hash) {
-        clearInterval(cycleInterval);
+      function loadCapsule(hash) {
         try {
-          const decoded = atob(window.location.hash.slice(1));
+          const decoded = atob(hash.slice(1));
           const capsuleData = JSON.parse(decoded);
-          const isLocked = new Date(capsuleData.d) > new Date();
+          // const isLocked = new Date(capsuleData.d) > new Date();
+          const isLocked =
+            new Date(capsuleData.d).toISOString() >
+            new Date(new Date().toLocaleDateString()).toISOString();
 
           createView.classList.add('hidden');
           capsuleView.classList.remove('hidden');
+          capsuleView.classList.add('fade-in');
 
           if (isLocked) {
             capsuleView.innerHTML = `
               <div class="icon">🔒</div>
               <p class="return-text">
-                unlocks on ${new Date(capsuleData.d).toLocaleDateString()}
+                unlocks on ${
+                  new Date(capsuleData.d).toISOString().split('T')[0]
+                  // .toLocaleDateString()}
+                }
               </p>
             `;
           } else {
             capsuleView.innerHTML = `
               <div class="icon-unlocked">🔓</div>
-              <p class="opened-timestamp">Unlocked on ${new Date(
-                capsuleData.d
-              ).toLocaleDateString()}</p>
+              <p class="opened-timestamp">Unlocked on ${
+                new Date(capsuleData.d).toISOString().split('T')[0]
+              }</p>
               <p class="message">${capsuleData.m}</p>
             `;
           }
         } catch (e) {
+          console.error('Failed to load capsule:', e);
+
           capsuleView.innerHTML = '<p class="error">Invalid capsule</p>';
           createView.classList.add('hidden');
           capsuleView.classList.remove('hidden');
         }
+      }
+
+      // Check if viewing a capsule
+      if (window.location.hash) {
+        clearInterval(cycleInterval);
+        loadCapsule(window.location.hash);
       } else {
         // Create mode
         document.addEventListener('click', () => {
           if (cursor.style.display !== 'none') {
             cursor.style.display = 'none';
-            placeholderText.style.display = 'none';
             // messageInput.classList.add('active');
             messageInput.focus();
           }
         });
 
+        // Handle back/forward navigation
+        window.onhashchange = () => {
+          if (window.location.hash) {
+            clearInterval(cycleInterval);
+            loadCapsule(window.location.hash);
+          } else {
+            location.reload(); // Reset to create view if hash is empty
+          }
+        };
+
         // Handle message input
         messageInput.addEventListener('input', () => {
-          //   if (messageInput.value.length === 1) {
-          //     clearInterval(cycleInterval);
-          //     introText.style.opacity = '0';
-          //   }
           messageInput.style.height = 'auto';
           messageInput.style.height = messageInput.scrollHeight + 'px';
 
@@ -414,9 +424,12 @@
         // Handle next button for date
         dateNext.addEventListener('click', () => {
           if (dateInput.value) {
+            const selectedDate = new Date(dateInput.value);
+            // selectedDate.setHours(0, 0, 0, 0); // Set to end of day in local time
+
             const data = {
               m: messageInput.value.trim(),
-              d: dateInput.value,
+              d: selectedDate.toISOString(),
             };
             const encoded = btoa(JSON.stringify(data));
             const link = `${window.location.origin}${window.location.pathname}#${encoded}`;
