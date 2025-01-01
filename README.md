@@ -1,6 +1,8 @@
 # Time Capsule
 
-[Easy Time Capsule](https://easytimecapsule.com) is a simple web application that allows you to create and share messages. Enter a message and the date you want it to be unlocked, generate a unique link, and revisit it on the specified date to read the message.
+[Easy Time Capsule](https://easytimecapsule.com) is a simple web application that allows you to create and share messages to your friends. Enter a message and the date you want it to be unlocked, then a unique link will be generated. Use this link to read the message on the specified date.
+
+![Demo](output.gif)
 
 ## Installation
 
