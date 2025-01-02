@@ -268,6 +268,85 @@
         text-decoration: none;
         transition: transform 0.3s ease;
       }
+
+      .firework-container {
+        top: 0%;
+        left: 25%;
+        width: 50%;
+        height: 50%;
+        position: fixed;
+        overflow: hidden;
+      }
+      .firework {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        width: 0.5vmin;
+        aspect-ratio: 1;
+        background: radial-gradient(circle, yellow 0.5vmin, #0000 0) 50% 0%;
+        background-size: 0.5vmin 0.5vmin;
+        background-repeat: no-repeat;
+      }
+      @keyframes firework {
+        0% {
+          transform: translate(-50%, 60vh);
+          width: 0.5vmin;
+          opacity: 1;
+        }
+        45% {
+          transform: translate(-50%, -50%);
+          width: 0.5vmin;
+          opacity: 1;
+        }
+        50% {
+          transform: translate(-50%, -50%);
+          width: 0.5vmin;
+          opacity: 1;
+        }
+        100% {
+          width: 45vmin;
+          opacity: 0;
+        }
+      }
+      .firework,
+      .firework::before,
+      .firework::after {
+        --top: 60vh;
+        content: '';
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        width: 0.5vmin;
+        aspect-ratio: 1;
+        background: radial-gradient(circle, #ff0 0.2vmin, #0000 0) 50% 00%,
+          radial-gradient(circle, #ff69b4 0.2vmin, #0000 0) 50% 00%,
+          radial-gradient(circle, #00ffff 0.3vmin, #0000 0) 00% 50%,
+          radial-gradient(circle, #13ee5c 0.5vmin, #0000 0) 50% 99%,
+          radial-gradient(circle, #ff1493 0.2vmin, #0000 0) 99% 50%,
+          radial-gradient(circle, #4169e1 0.3vmin, #0000 0) 80% 90%,
+          radial-gradient(circle, #9932cc 0.5vmin, #0000 0) 95% 90%,
+          radial-gradient(circle, #00fa9a 0.5vmin, #0000 0) 10% 60%,
+          radial-gradient(circle, #ff4500 0.2vmin, #0000 0) 31% 80%,
+          radial-gradient(circle, #7fffd4 0.3vmin, #0000 0) 80% 10%,
+          radial-gradient(circle, #ff1493 0.2vmin, #0000 0) 90% 23%,
+          radial-gradient(circle, #40e0d0 0.3vmin, #0000 0) 45% 20%,
+          radial-gradient(circle, #ff69b4 0.5vmin, #0000 0) 13% 24%;
+        background-size: 0.5vmin 0.5vmin;
+        background-repeat: no-repeat;
+        animation: firework 2.5s cubic-bezier(0, 0, 0, 1);
+        animation-iteration-count: 4;
+        opacity: 0;
+      }
+
+      .firework::before {
+        transform: translate(-50%, -50%) rotate(25deg) !important;
+      }
+
+      .firework::after {
+        transform: translate(-50%, -50%) rotate(-37deg) !important;
+      }
     </style>
   </head>
   <body>
@@ -398,9 +477,12 @@
           } else {
             capsuleView.innerHTML = `
               <div class="icon-unlocked">🔓</div>
-              <p class="opened-timestamp">Unlocked on ${
+              <p class="opened-timestamp ">Unlocked on ${
                 new Date(capsuleData.d).toISOString().split('T')[0]
               }</p>
+              <div class="firework-container">
+                <div class="firework">
+              </div> </div
               <p class="message">${capsuleData.m}</p>
                 ${
                   capsuleData.i
@@ -409,6 +491,7 @@
                 }
 
             `;
+            // <div class="firework"></div>;
           }
         } catch (e) {
           console.error('Failed to load capsule:', e);
