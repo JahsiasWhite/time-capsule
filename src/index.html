@@ -34,7 +34,7 @@
         overflow-wrap: anywhere;
       }
 
-      .input-container {
+      .main-container {
         max-width: 600px;
         width: 100%;
         text-align: center;
@@ -42,9 +42,10 @@
       }
 
       .intro-text {
-        position: absolute;
+        position: fixed;
+        left: 0;
+        top: 10%;
         width: 100%;
-        bottom: 32vh;
         margin-bottom: 20px;
         color: #666;
         opacity: 0;
@@ -223,12 +224,18 @@
         }
       }
 
+      .fade-in-quick {
+        animation: fadeIn 1.5s ease-in forwards;
+      }
+
       .fade-in {
-        animation: fadeIn 1s ease-in forwards;
+        opacity: 0;
+        animation-delay: 1s;
+        animation: fadeIn 1s 1s ease-in forwards;
       }
 
       .fade-out {
-        animation: fadeOut 0.2s ease-in forwards;
+        animation: fadeOut 0.75s linear forwards;
       }
 
       textarea:focus::placeholder {
@@ -347,39 +354,57 @@
       .firework::after {
         transform: translate(-50%, -50%) rotate(-37deg) !important;
       }
+
+      .input-container {
+        position: fixed;
+        width: 100%;
+        left: 0;
+        bottom: 45%;
+      }
+
+      .date-container {
+        position: fixed;
+        bottom: 45%;
+        width: 75%;
+        left: 12.5%;
+      }
     </style>
   </head>
   <body>
     <div class="container">
-      <div class="input-container" id="createView">
+      <div class="main-container" id="createView">
         <h1 class="intro-text" id="introText">
           write a message for your time capsule
         </h1>
-        <div class="cursor hidden" id="cursor"></div>
-        <textarea
-          class="message-input fade-in"
-          id="messageInput"
-          placeholder="type your message"
-          rows="1"
-        ></textarea>
 
-        <div id="controlsSection" class="controls-container fade-in">
-          <div class="upload-section">
-            <input
-              type="file"
-              id="imageUpload"
-              accept="image/*"
-              class="hidden"
-            />
-            <label for="imageUpload" class="button upload-button">
-              Choose Image
-              <span id="selectedFileName"></span>
-            </label>
+        <div class="input-container" id="inputContainer">
+          <div class="cursor hidden" id="cursor"></div>
+          <textarea
+            class="message-input fade-in-quick"
+            id="messageInput"
+            placeholder="type your message"
+            rows="1"
+          ></textarea>
+
+          <div id="controlsSection" class="controls-container fade-in-quick">
+            <div class="upload-section">
+              <input
+                type="file"
+                id="imageUpload"
+                accept="image/*"
+                class="hidden"
+              />
+              <label for="imageUpload" class="button upload-button">
+                Choose Image
+                <span id="selectedFileName"></span>
+              </label>
+            </div>
+
+            <button id="messageNext" class="button">Next</button>
           </div>
-
-          <button id="messageNext" class="button">Next</button>
         </div>
-        <div id="dateContainer" class="hidden">
+
+        <div id="dateContainer" class="date-container hidden">
           <p class="date-label">
             enter a date for the time capsule to be unlocked
           </p>
@@ -399,6 +424,7 @@
     <script>
       const cursor = document.getElementById('cursor');
       const messageInput = document.getElementById('messageInput');
+      const inputContainer = document.getElementById('inputContainer');
       const messageNext = document.getElementById('messageNext');
       const dateContainer = document.getElementById('dateContainer');
       const dateInput = document.getElementById('dateInput');
@@ -462,7 +488,7 @@
 
           createView.classList.add('hidden');
           capsuleView.classList.remove('hidden');
-          capsuleView.classList.add('fade-in');
+          capsuleView.classList.add('fade-in-quick');
 
           if (isLocked) {
             capsuleView.innerHTML = `
@@ -542,14 +568,16 @@
         // Handle next button for message
         messageNext.addEventListener('click', () => {
           if (messageInput.value.trim()) {
+            inputContainer.classList.add('fade-out');
+
             // messageInput.classList.add('hidden');
             messageInput.classList.remove('fade-in');
-            messageInput.classList.add('fade-out');
-            messageInput.classList.add('hidden');
+            // messageInput.classList.add('fade-out');
+            // messageInput.classList.add('hidden');
 
-            controlsSection.classList.add('hidden');
+            // controlsSection.classList.add('hidden');
 
-            messageNext.classList.add('hidden');
+            // messageNext.classList.add('hidden');
 
             dateContainer.classList.remove('hidden');
             dateInput.focus();
@@ -559,7 +587,7 @@
 
             // Ticker text
             introText.classList.add('fade-out');
-            introText.classList.add('hidden');
+            // introText.classList.add('hidden');
             clearInterval(cycleInterval);
           }
         });
@@ -602,7 +630,8 @@
             }
 
             navigator.clipboard.writeText(link);
-            dateContainer.classList.add('hidden');
+            // dateContainer.classList.add('hidden');
+            dateContainer.classList.add('fade-out');
 
             copiedText.classList.remove('hidden');
             copiedText.classList.add('fade-in');
